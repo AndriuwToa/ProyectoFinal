@@ -72,6 +72,7 @@ void eliminarZona();
 // Funciones de monitoreo
 void ingresarDatosContaminacion();
 void mostrarContaminacionActual();
+void mostrarContaminacionHistorica();
 void compararConLimitesOMS();
 void compararDiasIngresados();
 void compararDiasConOMS();
@@ -113,7 +114,7 @@ void guardarDatos();
 
 // Variables globales
 extern Zona zonas[MAX_ZONAS];
-extern Alerta alertas[MAX_ZONAS * 2]; // 2 alertas por zona maximo
+extern Alerta alertas[MAX_ZONAS * MAX_DIAS * 4]; // 4 alertas máximo por día por zona
 extern Recomendacion recomendaciones[MAX_ZONAS * 3]; // 3 recomendaciones por zona maximo
 extern int num_zonas;
 extern int num_alertas;

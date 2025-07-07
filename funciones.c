@@ -2,7 +2,7 @@
 #include <math.h>
 
 Zona zonas[MAX_ZONAS];
-Alerta alertas[MAX_ZONAS * 2];
+Alerta alertas[MAX_ZONAS * MAX_DIAS * 4];
 Recomendacion recomendaciones[MAX_ZONAS * 3];
 int num_zonas = 0;
 int num_alertas = 0;
@@ -124,6 +124,22 @@ void guardarDatos() {
     }
 }
 
+int encontrarSiguienteID() {
+    for (int id = 1; id <= MAX_ZONAS; id++) {
+        int id_usado = 0;
+        for (int i = 0; i < num_zonas; i++) {
+            if (zonas[i].id == id) {
+                id_usado = 1;
+                break;
+            }
+        }
+        if (!id_usado) {
+            return id;
+        }
+    }
+    return -1; // No hay IDs disponibles
+}
+
 void agregarZona() {
     if (num_zonas >= MAX_ZONAS) {
         printf("No se pueden agregar mas zonas. Limite alcanzado.\n");
@@ -150,7 +166,13 @@ void agregarZona() {
     
     for (int i = 0; i < cantidad; i++) {
         Zona nueva;
-        nueva.id = num_zonas + 1;
+        nueva.id = encontrarSiguienteID();
+        
+        if (nueva.id == -1) {
+            printf("Error: No hay IDs disponibles.\n");
+            break;
+        }
+        
         nueva.num_registros = 0;
         
         printf("\n--- Zona %d de %d ---\n", i + 1, cantidad);
@@ -379,6 +401,43 @@ void mostrarContaminacionActual() {
     }
 }
 
+void mostrarContaminacionHistorica() {
+    if (num_zonas == 0) {
+        printf("No hay zonas registradas.\n");
+        return;
+    }
+    
+    printf("\n=== CONTAMINACION HISTORICA ===\n");
+    
+    for (int i = 0; i < num_zonas; i++) {
+        if (zonas[i].num_registros == 0) {
+            printf("Zona %s: No hay datos registrados.\n", zonas[i].nombre);
+            continue;
+        }
+        
+        printf("\nZona: %s\n", zonas[i].nombre);
+        printf("Total de registros: %d\n", zonas[i].num_registros);
+        printf("----------------------------------------\n");
+        
+        for (int j = 0; j < zonas[i].num_registros; j++) {
+            char fechaStr[11];
+            formatearFecha(zonas[i].registros[j].fecha, fechaStr);
+            
+            printf("\nDia %d (%s):\n", j + 1, fechaStr);
+            printf("Contaminantes:\n");
+            printf("  CO2: %.2f ppm\n", zonas[i].registros[j].niveles.co2);
+            printf("  SO2: %.3f ppm\n", zonas[i].registros[j].niveles.so2);
+            printf("  NO2: %.3f ppm\n", zonas[i].registros[j].niveles.no2);
+            printf("  PM2.5: %.2f ug/m3\n", zonas[i].registros[j].niveles.pm25);
+            printf("Clima:\n");
+            printf("  Temperatura: %.1f grados C\n", zonas[i].registros[j].clima.temperatura);
+            printf("  Humedad: %.1f%%\n", zonas[i].registros[j].clima.humedad);
+            printf("  Viento: %.1f km/h\n", zonas[i].registros[j].clima.velocidad_viento);
+        }
+        printf("========================================\n");
+    }
+}
+
 void compararConLimitesOMS() {
     if (num_zonas == 0) {
         printf("No hay zonas registradas.\n");
@@ -520,152 +579,208 @@ void generarAlertas() {
         return;
     }
     
-    num_alertas = 0; 
+    num_alertas = 0; // Reiniciar alertas
     
     for (int i = 0; i < num_zonas; i++) {
         if (zonas[i].num_registros == 0) continue;
         
-        RegistroDiario *actual = &zonas[i].registros[zonas[i].num_registros - 1];
-
-        if (actual->niveles.co2 > LIMITE_CO2) {
-            Alerta alerta;
-            snprintf(alerta.mensaje, sizeof(alerta.mensaje), 
-                    "ALERTA: Zona %s - CO2 actual (%.2f ppm) excede limite OMS (%.1f ppm)", 
-                    zonas[i].nombre, actual->niveles.co2, LIMITE_CO2);
-            alerta.fecha = time(NULL);
-            alerta.prioridad = 2;
-            alertas[num_alertas++] = alerta;
-        }
-        
-        if (actual->niveles.so2 > LIMITE_SO2) {
-            Alerta alerta;
-            snprintf(alerta.mensaje, sizeof(alerta.mensaje), 
-                    "ALERTA: Zona %s - SO2 actual (%.3f ppm) excede limite OMS (%.3f ppm)", 
-                    zonas[i].nombre, actual->niveles.so2, LIMITE_SO2);
-            alerta.fecha = time(NULL);
-            alerta.prioridad = 2;
-            alertas[num_alertas++] = alerta;
-        }
-        
-        if (actual->niveles.no2 > LIMITE_NO2) {
-            Alerta alerta;
-            snprintf(alerta.mensaje, sizeof(alerta.mensaje), 
-                    "ALERTA: Zona %s - NO2 actual (%.3f ppm) excede limite OMS (%.3f ppm)", 
-                    zonas[i].nombre, actual->niveles.no2, LIMITE_NO2);
-            alerta.fecha = time(NULL);
-            alerta.prioridad = 2;
-            alertas[num_alertas++] = alerta;
-        }
-        
-        if (actual->niveles.pm25 > LIMITE_PM25) {
-            Alerta alerta;
-            snprintf(alerta.mensaje, sizeof(alerta.mensaje), 
-                    "ALERTA: Zona %s - PM2.5 actual (%.2f ug/m3) excede limite OMS (%.1f ug/m3)", 
-                    zonas[i].nombre, actual->niveles.pm25, LIMITE_PM25);
-            alerta.fecha = time(NULL);
-            alerta.prioridad = 2;
-            alertas[num_alertas++] = alerta;
-        }
-
-        if (zonas[i].num_registros >= 3) {
-            RegistroDiario *ultimos[3];
-            for (int j = 0; j < 3; j++) {
-                ultimos[j] = &zonas[i].registros[zonas[i].num_registros - 1 - j];
-            }
+        // Generar alertas para todos los días registrados
+        for (int dia = 0; dia < zonas[i].num_registros; dia++) {
+            RegistroDiario *actual = &zonas[i].registros[dia];
             
-            Contaminantes prediccion;
-            prediccion.co2 = (ultimos[0]->niveles.co2 * 0.5 + ultimos[1]->niveles.co2 * 0.3 + ultimos[2]->niveles.co2 * 0.2);
-            prediccion.so2 = (ultimos[0]->niveles.so2 * 0.5 + ultimos[1]->niveles.so2 * 0.3 + ultimos[2]->niveles.so2 * 0.2);
-            prediccion.no2 = (ultimos[0]->niveles.no2 * 0.5 + ultimos[1]->niveles.no2 * 0.3 + ultimos[2]->niveles.no2 * 0.2);
-            prediccion.pm25 = (ultimos[0]->niveles.pm25 * 0.5 + ultimos[1]->niveles.pm25 * 0.3 + ultimos[2]->niveles.pm25 * 0.2);
-
-            float factor_clima = 1.0;
-            if (actual->clima.velocidad_viento < 5.0) factor_clima *= 1.2;
-            else if (actual->clima.velocidad_viento > 15.0) factor_clima *= 0.8;
-            if (actual->clima.humedad < 30.0) factor_clima *= 1.1;
-            
-            prediccion.co2 *= factor_clima;
-            prediccion.so2 *= factor_clima;
-            prediccion.no2 *= factor_clima;
-            prediccion.pm25 *= factor_clima;
-
-            if (prediccion.co2 > LIMITE_CO2) {
+            // Alertas por exceso de límites actuales
+            if (actual->niveles.co2 > LIMITE_CO2) {
                 Alerta alerta;
                 snprintf(alerta.mensaje, sizeof(alerta.mensaje), 
-                        "PREDICCION: Zona %s - CO2 previsto (%.2f ppm) excedera limite OMS (%.1f ppm)", 
-                        zonas[i].nombre, prediccion.co2, LIMITE_CO2);
-                alerta.fecha = time(NULL);
-                alerta.prioridad = 1;
+                        "ALERTA: Zona %s - CO2 actual (%.2f ppm) excede limite OMS (%.1f ppm)", 
+                        zonas[i].nombre, actual->niveles.co2, LIMITE_CO2);
+                alerta.fecha = actual->fecha;
+                alerta.prioridad = 2;
                 alertas[num_alertas++] = alerta;
             }
             
-            if (prediccion.so2 > LIMITE_SO2) {
+            if (actual->niveles.so2 > LIMITE_SO2) {
                 Alerta alerta;
                 snprintf(alerta.mensaje, sizeof(alerta.mensaje), 
-                        "PREDICCION: Zona %s - SO2 previsto (%.3f ppm) excedera limite OMS (%.3f ppm)", 
-                        zonas[i].nombre, prediccion.so2, LIMITE_SO2);
-                alerta.fecha = time(NULL);
-                alerta.prioridad = 1;
+                        "ALERTA: Zona %s - SO2 actual (%.3f ppm) excede limite OMS (%.3f ppm)", 
+                        zonas[i].nombre, actual->niveles.so2, LIMITE_SO2);
+                alerta.fecha = actual->fecha;
+                alerta.prioridad = 2;
                 alertas[num_alertas++] = alerta;
             }
             
-            if (prediccion.no2 > LIMITE_NO2) {
+            if (actual->niveles.no2 > LIMITE_NO2) {
                 Alerta alerta;
                 snprintf(alerta.mensaje, sizeof(alerta.mensaje), 
-                        "PREDICCION: Zona %s - NO2 previsto (%.3f ppm) excedera limite OMS (%.3f ppm)", 
-                        zonas[i].nombre, prediccion.no2, LIMITE_NO2);
-                alerta.fecha = time(NULL);
-                alerta.prioridad = 1;
+                        "ALERTA: Zona %s - NO2 actual (%.3f ppm) excede limite OMS (%.3f ppm)", 
+                        zonas[i].nombre, actual->niveles.no2, LIMITE_NO2);
+                alerta.fecha = actual->fecha;
+                alerta.prioridad = 2;
                 alertas[num_alertas++] = alerta;
             }
             
-            if (prediccion.pm25 > LIMITE_PM25) {
+            if (actual->niveles.pm25 > LIMITE_PM25) {
                 Alerta alerta;
                 snprintf(alerta.mensaje, sizeof(alerta.mensaje), 
-                        "PREDICCION: Zona %s - PM2.5 previsto (%.2f ug/m3) excedera limite OMS (%.1f ug/m3)", 
-                        zonas[i].nombre, prediccion.pm25, LIMITE_PM25);
-                alerta.fecha = time(NULL);
-                alerta.prioridad = 1;
+                        "ALERTA: Zona %s - PM2.5 actual (%.2f ug/m3) excede limite OMS (%.1f ug/m3)", 
+                        zonas[i].nombre, actual->niveles.pm25, LIMITE_PM25);
+                alerta.fecha = actual->fecha;
+                alerta.prioridad = 2;
                 alertas[num_alertas++] = alerta;
+            }
+            
+            // Generar predicciones solo si hay suficientes datos (desde el día 3 en adelante)
+            if (dia >= 2) {
+                RegistroDiario *ultimos[3];
+                for (int j = 0; j < 3; j++) {
+                    ultimos[j] = &zonas[i].registros[dia - j];
+                }
+                
+                Contaminantes prediccion;
+                prediccion.co2 = (ultimos[0]->niveles.co2 * 0.5 + ultimos[1]->niveles.co2 * 0.3 + ultimos[2]->niveles.co2 * 0.2);
+                prediccion.so2 = (ultimos[0]->niveles.so2 * 0.5 + ultimos[1]->niveles.so2 * 0.3 + ultimos[2]->niveles.so2 * 0.2);
+                prediccion.no2 = (ultimos[0]->niveles.no2 * 0.5 + ultimos[1]->niveles.no2 * 0.3 + ultimos[2]->niveles.no2 * 0.2);
+                prediccion.pm25 = (ultimos[0]->niveles.pm25 * 0.5 + ultimos[1]->niveles.pm25 * 0.3 + ultimos[2]->niveles.pm25 * 0.2);
+                
+                float factor_clima = 1.0;
+                if (actual->clima.velocidad_viento < 5.0) factor_clima *= 1.2;
+                else if (actual->clima.velocidad_viento > 15.0) factor_clima *= 0.8;
+                if (actual->clima.humedad < 30.0) factor_clima *= 1.1;
+                
+                prediccion.co2 *= factor_clima;
+                prediccion.so2 *= factor_clima;
+                prediccion.no2 *= factor_clima;
+                prediccion.pm25 *= factor_clima;
+                
+                if (prediccion.co2 > LIMITE_CO2) {
+                    Alerta alerta;
+                    snprintf(alerta.mensaje, sizeof(alerta.mensaje), 
+                            "PREDICCION: Zona %s - CO2 previsto (%.2f ppm) excedera limite OMS (%.1f ppm)", 
+                            zonas[i].nombre, prediccion.co2, LIMITE_CO2);
+                    alerta.fecha = actual->fecha;
+                    alerta.prioridad = 1;
+                    alertas[num_alertas++] = alerta;
+                }
+                
+                if (prediccion.so2 > LIMITE_SO2) {
+                    Alerta alerta;
+                    snprintf(alerta.mensaje, sizeof(alerta.mensaje), 
+                            "PREDICCION: Zona %s - SO2 previsto (%.3f ppm) excedera limite OMS (%.3f ppm)", 
+                            zonas[i].nombre, prediccion.so2, LIMITE_SO2);
+                    alerta.fecha = actual->fecha;
+                    alerta.prioridad = 1;
+                    alertas[num_alertas++] = alerta;
+                }
+                
+                if (prediccion.no2 > LIMITE_NO2) {
+                    Alerta alerta;
+                    snprintf(alerta.mensaje, sizeof(alerta.mensaje), 
+                            "PREDICCION: Zona %s - NO2 previsto (%.3f ppm) excedera limite OMS (%.3f ppm)", 
+                            zonas[i].nombre, prediccion.no2, LIMITE_NO2);
+                    alerta.fecha = actual->fecha;
+                    alerta.prioridad = 1;
+                    alertas[num_alertas++] = alerta;
+                }
+                
+                if (prediccion.pm25 > LIMITE_PM25) {
+                    Alerta alerta;
+                    snprintf(alerta.mensaje, sizeof(alerta.mensaje), 
+                            "PREDICCION: Zona %s - PM2.5 previsto (%.2f ug/m3) excedera limite OMS (%.1f ug/m3)", 
+                            zonas[i].nombre, prediccion.pm25, LIMITE_PM25);
+                    alerta.fecha = actual->fecha;
+                    alerta.prioridad = 1;
+                    alertas[num_alertas++] = alerta;
+                }
             }
         }
     }
     
-    printf("Se generaron %d alertas.\n", num_alertas);
+    printf("Se generaron %d alertas historicas.\n", num_alertas);
     guardarDatos();
 }
 
 void listarAlertas() {
-    if (num_alertas == 0) {
-        printf("No hay alertas registradas.\n");
+    if (num_zonas == 0) {
+        printf("No hay zonas registradas.\n");
         return;
     }
     
-    printf("\n=== ALERTAS ===\n");
+    if (num_alertas == 0) {
+        printf("No hay alertas registradas.\n");
+        printf("Genere alertas primero usando la opcion 1.\n");
+        return;
+    }
     
+    listarZonas();
+    int id = leerEntero("Ingrese el ID de la zona para ver alertas: ");
     
-    for (int i = 0; i < num_alertas - 1; i++) {
-        for (int j = i + 1; j < num_alertas; j++) {
-            if (alertas[j].prioridad > alertas[i].prioridad) {
-                Alerta temp = alertas[i];
-                alertas[i] = alertas[j];
-                alertas[j] = temp;
+    // Buscar la zona por ID
+    char nombreZona[MAX_NOMBRE];
+    int zonaEncontrada = 0;
+    for (int i = 0; i < num_zonas; i++) {
+        if (zonas[i].id == id) {
+            strcpy(nombreZona, zonas[i].nombre);
+            zonaEncontrada = 1;
+            break;
+        }
+    }
+    
+    if (!zonaEncontrada) {
+        printf("No se encontro una zona con ID %d\n", id);
+        return;
+    }
+    
+    printf("\n=== ALERTAS %s ===\n", nombreZona);
+    
+    // Filtrar alertas de la zona seleccionada
+    Alerta alertasZona[MAX_DIAS * 4];
+    int numAlertasZona = 0;
+    
+    for (int i = 0; i < num_alertas; i++) {
+        if (strstr(alertas[i].mensaje, nombreZona) != NULL) {
+            alertasZona[numAlertasZona++] = alertas[i];
+        }
+    }
+    
+    if (numAlertasZona == 0) {
+        printf("No hay alertas para la zona %s\n", nombreZona);
+        return;
+    }
+    
+    // Ordenar alertas por fecha (más recientes primero)
+    for (int i = 0; i < numAlertasZona - 1; i++) {
+        for (int j = i + 1; j < numAlertasZona; j++) {
+            if (alertasZona[i].fecha < alertasZona[j].fecha) {
+                Alerta temp = alertasZona[i];
+                alertasZona[i] = alertasZona[j];
+                alertasZona[j] = temp;
             }
         }
     }
     
-    for (int i = 0; i < num_alertas; i++) {
-        char fechaStr[20];
-        formatearFecha(alertas[i].fecha, fechaStr);
+    // Agrupar por fecha y mostrar
+    time_t fechaActual = 0;
+    for (int i = 0; i < numAlertasZona; i++) {
+        if (alertasZona[i].fecha != fechaActual) {
+            fechaActual = alertasZona[i].fecha;
+            char fechaStr[20];
+            formatearFecha(fechaActual, fechaStr);
+            printf("\nFecha: %s\n", fechaStr);
+        }
         
+        char fechaStr[20];
+        formatearFecha(alertasZona[i].fecha, fechaStr);
         printf("[%s] ", fechaStr);
-        switch (alertas[i].prioridad) {
+        
+        switch (alertasZona[i].prioridad) {
             case 1: printf("(BAJA) "); break;
             case 2: printf("(MEDIA) "); break;
             case 3: printf("(ALTA) "); break;
         }
-        printf("%s\n", alertas[i].mensaje);
+        printf("%s\n", alertasZona[i].mensaje);
     }
+    
+    printf("\nTotal de alertas para %s: %d\n", nombreZona, numAlertasZona);
 }
 
 void calcularPromediosHistoricos() {
