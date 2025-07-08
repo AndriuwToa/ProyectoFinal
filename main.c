@@ -125,8 +125,6 @@ int main() {
                 printf("Opcion no valida.\n");
         }
     } while (opcion != 0);
-    
-    return 0;
 }
 
 void menuGestionZonas() {
@@ -134,20 +132,22 @@ void menuGestionZonas() {
     do {
         printf("\n=== GESTION DE ZONAS (actualmente %d zonas) ===\n", num_zonas);
         printf("1. Agregar zona\n");
-        printf("2. Listar zonas\n");
-        printf("3. Buscar zona\n");
-        printf("4. Modificar zona\n");
-        printf("5. Eliminar zona\n");
+        printf("2. Gestion automatica de zonas\n");
+        printf("3. Listar zonas\n");
+        printf("4. Buscar zona\n");
+        printf("5. Modificar zona\n");
+        printf("6. Eliminar zona\n");
         printf("0. Volver al menu principal\n");
         
         opcion = leerEntero("Seleccione una opcion: ");
         
         switch (opcion) {
             case 1: agregarZona(); break;
-            case 2: listarZonas(); break;
-            case 3: buscarZona(); break;
-            case 4: modificarZona(); break;
-            case 5: eliminarZona(); break;
+            case 2: agregarZonasAutomaticas(); break;
+            case 3: listarZonas(); break;
+            case 4: buscarZona(); break;
+            case 5: modificarZona(); break;
+            case 6: eliminarZona(); break;
             case 0: break;
             default: printf("Opcion no valida.\n");
         }

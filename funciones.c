@@ -1510,4 +1510,174 @@ void compararDiasConOMS() {
     printf("No se encontro una zona con ID %d\n", id);
 }
 
+void agregarZonasAutomaticas() {
+    if (strlen(nombre_ciudad) == 0) {
+        printf("No se ha ingresado el nombre de la ciudad.\n");
+        return;
+    }
+    
+    // Definir zonas por ciudad
+    char zonasQuito[10][MAX_NOMBRE] = {
+        "Centro Historico", "Cumbaya", "Inaquito", "La Floresta", "La Carolina",
+        "La Mariscal", "Tumbaco", "Los Chillos", "El Panecillo", "Mitad del Mundo"
+    };
+    
+    char zonasGuayaquil[10][MAX_NOMBRE] = {
+        "Centro", "Malecon 2000", "Las Penas", "Puerto Santa Ana", "Urdesa",
+        "Samborondon", "Kennedy", "Alborada", "Parque Historico", "Cerro Blanco"
+    };
+    
+    char zonasCuenca[10][MAX_NOMBRE] = {
+        "Centro Historico", "El Barranco", "Turi", "Yanuncay", "Puente Roto",
+        "Barrio de San Sebastian", "Barrio del Vado", "Parque Nacional Cajas", "Miraflores", "Capulispamba"
+    };
+    
+    char zonasSantoDomingo[10][MAX_NOMBRE] = {
+        "Centro", "Bomboli", "La Concordia", "El Colorado", "Abraham Calazacon",
+        "Zaracay", "Rio Verde", "Las Palmeras", "Los Rosales", "Plan de Vivienda"
+    };
+    
+    char zonasMachala[10][MAX_NOMBRE] = {
+        "Centro", "Puerto Bolivar", "La Aurora", "El Cambio", "Barrio Cuba",
+        "Jambeli (Archipielago)", "San Gregorio", "Brisas del Mar", "La Providencia", "Miraflores"
+    };
+    
+    char zonasManta[10][MAX_NOMBRE] = {
+        "Centro", "Tarqui", "Malecon", "Barbasquillo", "Murcielago",
+        "San Mateo", "Santa Marianita", "San Lorenzo", "El Palmar", "Las Cumbres"
+    };
+    
+    char zonasPortoviejo[10][MAX_NOMBRE] = {
+        "Centro", "El Floron", "Picoaza", "Colon", "Andres de Vera",
+        "San Pablo", "Ciudadela Universitaria", "Los Cerezos", "La California", "Crucita (Playa)"
+    };
+    
+    char zonasLoja[10][MAX_NOMBRE] = {
+        "Centro Historico", "Villonaco", "Pucara", "Jipiro", "Epoca",
+        "Daniel Alvarez", "La Argelia", "San Sebastian", "El Valle", "La Tebaida"
+    };
+    
+    char zonasAmbato[10][MAX_NOMBRE] = {
+        "Centro", "Ficoa", "Atocha", "La Peninsula", "Huachi Chico",
+        "Huachi Grande", "Ingahurco", "Miraflores", "Izamba", "Juan Benigno Vela"
+    };
+    
+    char zonasBanos[10][MAX_NOMBRE] = {
+        "Centro", "El Salado", "Runtun", "Las Cascadas (Ruta de las Cascadas)", "Agoyan",
+        "Rio Blanco", "Ulba", "Puyo (Ruta hacia)", "Caserio El Tungurahua", "El Pisque"
+    };
+    
+    // Determinar qué zonas usar basado en la ciudad
+    char (*zonasSeleccionadas)[MAX_NOMBRE] = NULL;
+    char ciudadLower[MAX_NOMBRE];
+    strcpy(ciudadLower, nombre_ciudad);
+    
+    // Convertir a minúsculas para comparación
+    for (int i = 0; ciudadLower[i]; i++) {
+        ciudadLower[i] = tolower(ciudadLower[i]);
+    }
+    
+    if (strcmp(ciudadLower, "quito") == 0) {
+        zonasSeleccionadas = zonasQuito;
+    } else if (strcmp(ciudadLower, "guayaquil") == 0) {
+        zonasSeleccionadas = zonasGuayaquil;
+    } else if (strcmp(ciudadLower, "cuenca") == 0) {
+        zonasSeleccionadas = zonasCuenca;
+    } else if (strcmp(ciudadLower, "santo domingo") == 0) {
+        zonasSeleccionadas = zonasSantoDomingo;
+    } else if (strcmp(ciudadLower, "machala") == 0) {
+        zonasSeleccionadas = zonasMachala;
+    } else if (strcmp(ciudadLower, "manta") == 0) {
+        zonasSeleccionadas = zonasManta;
+    } else if (strcmp(ciudadLower, "portoviejo") == 0) {
+        zonasSeleccionadas = zonasPortoviejo;
+    } else if (strcmp(ciudadLower, "loja") == 0) {
+        zonasSeleccionadas = zonasLoja;
+    } else if (strcmp(ciudadLower, "ambato") == 0) {
+        zonasSeleccionadas = zonasAmbato;
+    } else if (strcmp(ciudadLower, "banos") == 0) {
+        zonasSeleccionadas = zonasBanos;
+    } else {
+        printf("No hay zonas predefinidas para la ciudad '%s'.\n", nombre_ciudad);
+        printf("Use la opcion 1 para agregar zonas manualmente.\n");
+        return;
+    }
+    
+    // Contar cuántas zonas de la ciudad ya están agregadas
+    int zonasYaAgregadas = 0;
+    for (int i = 0; i < num_zonas; i++) {
+        for (int j = 0; j < 10; j++) {
+            if (strcmp(zonas[i].nombre, zonasSeleccionadas[j]) == 0) {
+                zonasYaAgregadas++;
+                break;
+            }
+        }
+    }
+    
+    int zonasDisponiblesCiudad = 10 - zonasYaAgregadas;
+    if (zonasDisponiblesCiudad <= 0) {
+        printf("Ya se han agregado todas las zonas disponibles para %s.\n", nombre_ciudad);
+        return;
+    }
+    
+    if (num_zonas >= MAX_ZONAS) {
+        printf("Ya se han agregado todas las zonas posibles (maximo %d).\n", MAX_ZONAS);
+        return;
+    }
+    
+    // Calcular el máximo real considerando tanto el límite del sistema como las zonas disponibles
+    int espacioSistema = MAX_ZONAS - num_zonas;
+    int zonasDisponibles = (zonasDisponiblesCiudad < espacioSistema) ? zonasDisponiblesCiudad : espacioSistema;
+    
+    int cantidad;
+    char mensaje[100];
+    do {
+        // Mostrar siempre el máximo de zonas disponibles de la ciudad si es la primera vez
+        if (zonasYaAgregadas == 0) {
+            sprintf(mensaje, "Cuantas zonas desea agregar automaticamente (maximo 10)? ");
+        } else {
+            sprintf(mensaje, "Cuantas zonas desea agregar automaticamente (maximo %d)? ", zonasDisponibles);
+        }
+        cantidad = leerEntero(mensaje);
+        if (cantidad <= 0 || cantidad > zonasDisponibles) {
+            printf("Debe ingresar un numero entre 1 y %d.\n", zonasDisponibles);
+        }
+    } while (cantidad <= 0 || cantidad > zonasDisponibles);
+    
+    printf("Se le asignara %d zona(s) de manera automatica dependiendo de la ciudad agregada.\n", cantidad);
+    printf("Zonas agregadas:\n");
+    
+    int agregadas = 0;
+    for (int i = 0; i < 10 && agregadas < cantidad; i++) {
+        // Verificar si esta zona ya existe
+        int yaExiste = 0;
+        for (int j = 0; j < num_zonas; j++) {
+            if (strcmp(zonas[j].nombre, zonasSeleccionadas[i]) == 0) {
+                yaExiste = 1;
+                break;
+            }
+        }
+        
+        if (!yaExiste) {
+            Zona nueva;
+            nueva.id = encontrarSiguienteID();
+            
+            if (nueva.id == -1) {
+                printf("Error: No hay IDs disponibles.\n");
+                break;
+            }
+            
+            nueva.num_registros = 0;
+            strcpy(nueva.nombre, zonasSeleccionadas[i]);
+            
+            zonas[num_zonas++] = nueva;
+            printf("%d %s\n", nueva.id, nueva.nombre);
+            agregadas++;
+        }
+    }
+    
+    printf("Zonas agregadas exitosamente.\n");
+    guardarDatos();
+}
+
 //hola mundo

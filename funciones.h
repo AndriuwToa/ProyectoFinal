@@ -64,6 +64,7 @@ typedef struct {
 
 // Funciones de gestión de zonas
 void agregarZona();
+void agregarZonasAutomaticas();
 void listarZonas();
 void buscarZona();
 void modificarZona();
