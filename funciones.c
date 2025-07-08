@@ -90,22 +90,16 @@ void cargarDatos() {
         num_zonas = fread(zonas, sizeof(Zona), MAX_ZONAS, archivo);
         fclose(archivo);
     }
-    
-    // Cargar alertas
     archivo = fopen("alertas.dat", "rb");
     if (archivo) {
         num_alertas = fread(alertas, sizeof(Alerta), MAX_ZONAS * 2, archivo);
         fclose(archivo);
     }
-    
-    // Cargar recomendaciones
     archivo = fopen("recomendaciones.dat", "rb");
     if (archivo) {
         num_recomendaciones = fread(recomendaciones, sizeof(Recomendacion), MAX_ZONAS * 3, archivo);
         fclose(archivo);
     }
-    
-    // Cargar nombre de ciudad
     archivo = fopen("ciudad.dat", "rb");
     if (archivo) {
         fread(nombre_ciudad, sizeof(char), MAX_NOMBRE, archivo);
@@ -115,29 +109,25 @@ void cargarDatos() {
 
 void guardarDatos() {
     FILE *archivo;
-    
-    // Guardar zonas
+
     archivo = fopen("zonas.dat", "wb");
     if (archivo) {
         fwrite(zonas, sizeof(Zona), num_zonas, archivo);
         fclose(archivo);
     }
-    
-    // Guardar alertas
+
     archivo = fopen("alertas.dat", "wb");
     if (archivo) {
         fwrite(alertas, sizeof(Alerta), num_alertas, archivo);
         fclose(archivo);
     }
-    
-    // Guardar recomendaciones
+
     archivo = fopen("recomendaciones.dat", "wb");
     if (archivo) {
         fwrite(recomendaciones, sizeof(Recomendacion), num_recomendaciones, archivo);
         fclose(archivo);
     }
-    
-    // Guardar nombre de ciudad
+
     archivo = fopen("ciudad.dat", "wb");
     if (archivo) {
         fwrite(nombre_ciudad, sizeof(char), MAX_NOMBRE, archivo);
@@ -158,7 +148,7 @@ int encontrarSiguienteID() {
             return id;
         }
     }
-    return -1; // No hay IDs disponibles
+    return -1; 
 }
 
 void agregarZona() {
@@ -316,7 +306,6 @@ void ingresarDatosContaminacion() {
     
     for (int i = 0; i < num_zonas; i++) {
         if (zonas[i].id == id) {
-            // Preguntar cuantos dias quiere ingresar
             int numDias;
             do {
                 numDias = leerEntero("Cuantos dias de datos desea ingresar (minimo 3, maximo 5): ");
@@ -324,8 +313,7 @@ void ingresarDatosContaminacion() {
                     printf("Debe ingresar entre 3 y 5 dias.\n");
                 }
             } while (numDias < 3 || numDias > 5);
-            
-            // Verificar que no se exceda el limite de registros
+
             if (zonas[i].num_registros + numDias > MAX_DIAS) {
                 printf("No se pueden agregar %d dias. La zona tiene %d registros, maximo %d.\n", 
                        numDias, zonas[i].num_registros, MAX_DIAS);
@@ -333,8 +321,7 @@ void ingresarDatosContaminacion() {
             }
             
             printf("\nIngresando datos para %d dias en la zona %s:\n", numDias, zonas[i].nombre);
-            
-            // Ingresar datos para cada dia
+
             for (int dia = 1; dia <= numDias; dia++) {
                 RegistroDiario nuevo;
                 char fechaStr[11];
@@ -586,16 +573,14 @@ void generarAlertas() {
         return;
     }
     
-    num_alertas = 0; // Reiniciar alertas
+    num_alertas = 0; 
     
     for (int i = 0; i < num_zonas; i++) {
         if (zonas[i].num_registros == 0) continue;
-        
-        // Generar alertas para todos los días registrados
+
         for (int dia = 0; dia < zonas[i].num_registros; dia++) {
             RegistroDiario *actual = &zonas[i].registros[dia];
-            
-            // Alertas por exceso de límites actuales
+
             if (actual->niveles.co2 > LIMITE_CO2) {
                 Alerta alerta;
                 snprintf(alerta.mensaje, sizeof(alerta.mensaje), 
@@ -635,8 +620,7 @@ void generarAlertas() {
                 alerta.prioridad = 2;
                 alertas[num_alertas++] = alerta;
             }
-            
-            // Generar predicciones solo si hay suficientes datos (desde el día 3 en adelante)
+
             if (dia >= 2) {
                 RegistroDiario *ultimos[3];
                 for (int j = 0; j < 3; j++) {
@@ -720,8 +704,7 @@ void listarAlertas() {
     
     listarZonas();
     int id = leerEntero("Ingrese el ID de la zona para ver alertas: ");
-    
-    // Buscar la zona por ID
+
     char nombreZona[MAX_NOMBRE];
     int zonaEncontrada = 0;
     for (int i = 0; i < num_zonas; i++) {
@@ -738,8 +721,7 @@ void listarAlertas() {
     }
     
     printf("\n=== ALERTAS %s ===\n", nombreZona);
-    
-    // Filtrar alertas de la zona seleccionada
+
     Alerta alertasZona[MAX_DIAS * 4];
     int numAlertasZona = 0;
     
@@ -753,8 +735,7 @@ void listarAlertas() {
         printf("No hay alertas para la zona %s\n", nombreZona);
         return;
     }
-    
-    // Ordenar alertas por fecha (más recientes primero)
+
     for (int i = 0; i < numAlertasZona - 1; i++) {
         for (int j = i + 1; j < numAlertasZona; j++) {
             if (alertasZona[i].fecha < alertasZona[j].fecha) {
@@ -764,8 +745,7 @@ void listarAlertas() {
             }
         }
     }
-    
-    // Agrupar por fecha y mostrar
+
     time_t fechaActual = 0;
     for (int i = 0; i < numAlertasZona; i++) {
         if (alertasZona[i].fecha != fechaActual) {
@@ -1418,8 +1398,6 @@ void compararDiasConOMS() {
                 formatearFecha(zonas[i].registros[j].fecha, fechaStr);
                 
                 printf("=== DIA %d (%s) ===\n", j + 1, fechaStr);
-                
-                // Comparacion de contaminantes
                 printf("CONTAMINANTES:\n");
                 printf("  CO2: %.2f ppm ", zonas[i].registros[j].niveles.co2);
                 if (zonas[i].registros[j].niveles.co2 > LIMITE_CO2) {
@@ -1452,8 +1430,6 @@ void compararDiasConOMS() {
                 } else {
                     printf("(OK - Dentro del limite OMS)\n");
                 }
-                
-                // Comparacion de condiciones climaticas
                 printf("\nCONDICIONES CLIMATICAS:\n");
                 printf("  Temperatura: %.1f grados C ", zonas[i].registros[j].clima.temperatura);
                 if (zonas[i].registros[j].clima.temperatura < TEMP_MIN_CONFORT) {
@@ -1487,8 +1463,7 @@ void compararDiasConOMS() {
                 
                 printf("\n");
             }
-            
-            // Resumen final
+
             printf("=== RESUMEN DE EVALUACION OMS ===\n");
             printf("Total de excesos en contaminantes: %d\n", excesos_contaminantes);
             printf("Total de problemas climaticos: %d\n", excesos_climaticos);
@@ -1506,7 +1481,6 @@ void compararDiasConOMS() {
             return;
         }
     }
-    
     printf("No se encontro una zona con ID %d\n", id);
 }
 
@@ -1515,8 +1489,7 @@ void agregarZonasAutomaticas() {
         printf("No se ha ingresado el nombre de la ciudad.\n");
         return;
     }
-    
-    // Definir zonas por ciudad
+
     char zonasQuito[10][MAX_NOMBRE] = {
         "Centro Historico", "Cumbaya", "Inaquito", "La Floresta", "La Carolina",
         "La Mariscal", "Tumbaco", "Los Chillos", "El Panecillo", "Mitad del Mundo"
@@ -1566,13 +1539,11 @@ void agregarZonasAutomaticas() {
         "Centro", "El Salado", "Runtun", "Las Cascadas (Ruta de las Cascadas)", "Agoyan",
         "Rio Blanco", "Ulba", "Puyo (Ruta hacia)", "Caserio El Tungurahua", "El Pisque"
     };
-    
-    // Determinar qué zonas usar basado en la ciudad
+
     char (*zonasSeleccionadas)[MAX_NOMBRE] = NULL;
     char ciudadLower[MAX_NOMBRE];
     strcpy(ciudadLower, nombre_ciudad);
-    
-    // Convertir a minúsculas para comparación
+
     for (int i = 0; ciudadLower[i]; i++) {
         ciudadLower[i] = tolower(ciudadLower[i]);
     }
@@ -1602,8 +1573,6 @@ void agregarZonasAutomaticas() {
         printf("Use la opcion 1 para agregar zonas manualmente.\n");
         return;
     }
-    
-    // Contar cuántas zonas de la ciudad ya están agregadas
     int zonasYaAgregadas = 0;
     for (int i = 0; i < num_zonas; i++) {
         for (int j = 0; j < 10; j++) {
@@ -1620,30 +1589,21 @@ void agregarZonasAutomaticas() {
         return;
     }
     
-    if (num_zonas >= MAX_ZONAS) {
-        printf("Ya se han agregado todas las zonas posibles (maximo %d).\n", MAX_ZONAS);
-        return;
-    }
-    
-    // Calcular el máximo real considerando tanto el límite del sistema como las zonas disponibles
-    int espacioSistema = MAX_ZONAS - num_zonas;
-    int zonasDisponibles = (zonasDisponiblesCiudad < espacioSistema) ? zonasDisponiblesCiudad : espacioSistema;
-    
     int cantidad;
     char mensaje[100];
     do {
-        // Mostrar siempre el máximo de zonas disponibles de la ciudad si es la primera vez
         if (zonasYaAgregadas == 0) {
             sprintf(mensaje, "Cuantas zonas desea agregar automaticamente (maximo 10)? ");
         } else {
-            sprintf(mensaje, "Cuantas zonas desea agregar automaticamente (maximo %d)? ", zonasDisponibles);
+            sprintf(mensaje, "Cuantas zonas desea agregar automaticamente (maximo %d)? ", zonasDisponiblesCiudad);
         }
         cantidad = leerEntero(mensaje);
-        if (cantidad <= 0 || cantidad > zonasDisponibles) {
-            printf("Debe ingresar un numero entre 1 y %d.\n", zonasDisponibles);
+        if (cantidad <= 0 || cantidad > zonasDisponiblesCiudad) {
+            printf("Debe ingresar un numero entre 1 y %d.\n", zonasDisponiblesCiudad);
         }
-    } while (cantidad <= 0 || cantidad > zonasDisponibles);
+    } while (cantidad <= 0 || cantidad > zonasDisponiblesCiudad);
     
+    printf("Son un total de 10 zonas.\n");
     printf("Se le asignara %d zona(s) de manera automatica dependiendo de la ciudad agregada.\n", cantidad);
     printf("Zonas agregadas:\n");
     
@@ -1679,5 +1639,3 @@ void agregarZonasAutomaticas() {
     printf("Zonas agregadas exitosamente.\n");
     guardarDatos();
 }
-
-//hola mundo

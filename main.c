@@ -7,13 +7,10 @@ void menuAlertas();
 void menuAnalisis();
 void menuRecomendaciones();
 void menuInformes();
-
-// Function to check if city name is set
 int validarNombreCiudad() {
     return strlen(nombre_ciudad) > 0;
 }
 
-// Function to check if there are at least 5 zones
 int validarMinimoZonas() {
     return num_zonas >= 5;
 }
