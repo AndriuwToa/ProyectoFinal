@@ -4,6 +4,7 @@
 Zona zonas[MAX_ZONAS];
 Alerta alertas[MAX_ZONAS * MAX_DIAS * 4];
 Recomendacion recomendaciones[MAX_ZONAS * 3];
+char nombre_ciudad[MAX_NOMBRE] = "";
 int num_zonas = 0;
 int num_alertas = 0;
 int num_recomendaciones = 0;
@@ -75,6 +76,12 @@ void formatearFecha(time_t fecha, char *fechaStr) {
     strftime(fechaStr, 11, "%d/%m/%Y", tm_info);
 }
 
+void agregarNombreCiudad() {
+    leerCadena("Ingrese el nombre de la ciudad: ", nombre_ciudad, MAX_NOMBRE);
+    printf("Ciudad ingresada exitosamente.\n");
+    guardarDatos();
+}
+
 void cargarDatos() {
     FILE *archivo;
 
@@ -95,6 +102,13 @@ void cargarDatos() {
     archivo = fopen("recomendaciones.dat", "rb");
     if (archivo) {
         num_recomendaciones = fread(recomendaciones, sizeof(Recomendacion), MAX_ZONAS * 3, archivo);
+        fclose(archivo);
+    }
+    
+    // Cargar nombre de ciudad
+    archivo = fopen("ciudad.dat", "rb");
+    if (archivo) {
+        fread(nombre_ciudad, sizeof(char), MAX_NOMBRE, archivo);
         fclose(archivo);
     }
 }
@@ -120,6 +134,13 @@ void guardarDatos() {
     archivo = fopen("recomendaciones.dat", "wb");
     if (archivo) {
         fwrite(recomendaciones, sizeof(Recomendacion), num_recomendaciones, archivo);
+        fclose(archivo);
+    }
+    
+    // Guardar nombre de ciudad
+    archivo = fopen("ciudad.dat", "wb");
+    if (archivo) {
+        fwrite(nombre_ciudad, sizeof(char), MAX_NOMBRE, archivo);
         fclose(archivo);
     }
 }

@@ -107,6 +107,7 @@ void limpiarBuffer();
 int leerEntero(const char *mensaje);
 float leerFloat(const char *mensaje);
 void leerCadena(const char *mensaje, char *cadena, int longitud);
+void agregarNombreCiudad();
 int validarFecha(const char *fecha);
 void formatearFecha(time_t fecha, char *fechaStr);
 void cargarDatos();
@@ -116,6 +117,7 @@ void guardarDatos();
 extern Zona zonas[MAX_ZONAS];
 extern Alerta alertas[MAX_ZONAS * MAX_DIAS * 4]; // 4 alertas máximo por día por zona
 extern Recomendacion recomendaciones[MAX_ZONAS * 3]; // 3 recomendaciones por zona maximo
+extern char nombre_ciudad[MAX_NOMBRE];
 extern int num_zonas;
 extern int num_alertas;
 extern int num_recomendaciones;

@@ -13,26 +13,32 @@ int main() {
     
     int opcion;
     do {
-        printf("\n=== SISTEMA DE GESTION Y PREDICCION DE CONTAMINACION ===\n");
-        printf("1. Gestion de Zonas\n");
-        printf("2. Monitoreo Actual\n");
-        printf("3. Prediccion de Contaminacion\n");
-        printf("4. Alertas\n");
-        printf("5. Analisis Historico\n");
-        printf("6. Recomendaciones\n");
-        printf("7. Informes\n");
+        if (strlen(nombre_ciudad) > 0) {
+            printf("\n=== SISTEMA DE GESTION Y PREDICCION DE CONTAMINACION %s ===\n", nombre_ciudad);
+        } else {
+            printf("\n=== SISTEMA DE GESTION Y PREDICCION DE CONTAMINACION ===\n");
+        }
+        printf("1. Agregar nombre de la ciudad\n");
+        printf("2. Gestion de Zonas\n");
+        printf("3. Monitoreo Actual\n");
+        printf("4. Prediccion de Contaminacion\n");
+        printf("5. Alertas\n");
+        printf("6. Analisis Historico\n");
+        printf("7. Recomendaciones\n");
+        printf("8. Informes\n");
         printf("0. Salir\n");
         
         opcion = leerEntero("Seleccione una opcion: ");
         
         switch (opcion) {
-            case 1: menuGestionZonas(); break;
-            case 2: menuMonitoreo(); break;
-            case 3: menuPrediccion(); break;
-            case 4: menuAlertas(); break;
-            case 5: menuAnalisis(); break;
-            case 6: menuRecomendaciones(); break;
-            case 7: menuInformes(); break;
+            case 1: agregarNombreCiudad(); break;
+            case 2: menuGestionZonas(); break;
+            case 3: menuMonitoreo(); break;
+            case 4: menuPrediccion(); break;
+            case 5: menuAlertas(); break;
+            case 6: menuAnalisis(); break;
+            case 7: menuRecomendaciones(); break;
+            case 8: menuInformes(); break;
             case 0: 
                 printf("Saliendo del sistema...\n");
                 guardarDatos();
