@@ -155,25 +155,27 @@ void menuMonitoreo() {
     int opcion;
     do {
         printf("\n=== MONITOREO ACTUAL ===\n");
-        printf("1. Ingresar datos de contaminacion\n");
-        printf("2. Mostrar contaminacion actual\n");
-        printf("3. Mostrar contaminacion historica\n");
-        printf("4. Comparar con limites OMS\n");
-        printf("5. Ingresar datos climaticos\n");
-        printf("6. Comparar dias ingresados\n");
-        printf("7. Comparar dias con estandares OMS\n");
+        printf("1. Ingresar/modificar datos de contaminacion\n");
+        printf("2. Gestion automatica de datos (para ultimos 30 dias)\n");
+        printf("3. Mostrar contaminacion actual\n");
+        printf("4. Mostrar contaminacion historica\n");
+        printf("5. Comparar con limites OMS\n");
+        printf("6. Ingresar datos climaticos\n");
+        printf("7. Comparar dias ingresados\n");
+        printf("8. Comparar dias con estandares OMS\n");
         printf("0. Volver al menu principal\n");
         
         opcion = leerEntero("Seleccione una opcion: ");
         
         switch (opcion) {
             case 1: ingresarDatosContaminacion(); break;
-            case 2: mostrarContaminacionActual(); break;
-            case 3: mostrarContaminacionHistorica(); break;
-            case 4: compararConLimitesOMS(); break;
-            case 5: ingresarDatosClimaticos(); break;
-            case 6: compararDiasIngresados(); break;
-            case 7: compararDiasConOMS(); break;
+            case 2: gestionAutomaticaDatos(); break;
+            case 3: mostrarContaminacionActual(); break;
+            case 4: mostrarContaminacionHistorica(); break;
+            case 5: compararConLimitesOMS(); break;
+            case 6: ingresarDatosClimaticos(); break;
+            case 7: compararDiasIngresados(); break;
+            case 8: compararDiasConOMS(); break;
             case 0: break;
             default: printf("Opcion no valida.\n");
         }

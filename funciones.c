@@ -295,6 +295,98 @@ void eliminarZona() {
     printf("No se encontro una zona con ID %d\n", id);
 }
 
+void gestionAutomaticaDatos() {
+    if (num_zonas == 0) {
+        printf("No hay zonas registradas. Agregue zonas primero.\n");
+        return;
+    }
+    
+    listarZonas();
+    int id = leerEntero("Ingrese el ID de la zona: ");
+    
+    for (int i = 0; i < num_zonas; i++) {
+        if (zonas[i].id == id) {
+            // Limpiar registros existentes
+            zonas[i].num_registros = 0;
+            
+            // Determinar región basada en la ciudad
+            char ciudadLower[MAX_NOMBRE];
+            strcpy(ciudadLower, nombre_ciudad);
+            for (int j = 0; ciudadLower[j]; j++) {
+                ciudadLower[j] = tolower(ciudadLower[j]);
+            }
+            
+            int esSierra = 0;
+            if (strcmp(ciudadLower, "quito") == 0 || strcmp(ciudadLower, "cuenca") == 0 || 
+                strcmp(ciudadLower, "loja") == 0 || strcmp(ciudadLower, "ambato") == 0 || 
+                strcmp(ciudadLower, "banos") == 0) {
+                esSierra = 1;
+            }
+            
+            // Generar datos para los últimos 30 días
+            time_t ahora = time(NULL);
+            for (int dia = 29; dia >= 0; dia--) {
+                RegistroDiario nuevo;
+                
+                // Calcular fecha (30 días hacia atrás desde hoy)
+                time_t fecha_dia = ahora - (dia * 24 * 3600);
+                nuevo.fecha = fecha_dia;
+                
+                // Generar datos base según región
+                if (esSierra) {
+                    // Datos típicos de sierra (altitud, clima más fresco)
+                    nuevo.niveles.co2 = 380.0 + (rand() % 50);
+                    nuevo.niveles.so2 = 0.008 + ((rand() % 20) / 1000.0);
+                    nuevo.niveles.no2 = 0.008 + ((rand() % 15) / 1000.0);
+                    nuevo.niveles.pm25 = 8.0 + (rand() % 12);
+                    
+                    nuevo.clima.temperatura = 12.0 + (rand() % 16);
+                    nuevo.clima.humedad = 45.0 + (rand() % 30);
+                    nuevo.clima.velocidad_viento = 5.0 + (rand() % 15);
+                } else {
+                    // Datos típicos de costa (nivel del mar, más cálido y húmedo)
+                    nuevo.niveles.co2 = 400.0 + (rand() % 60);
+                    nuevo.niveles.so2 = 0.012 + ((rand() % 25) / 1000.0);
+                    nuevo.niveles.no2 = 0.010 + ((rand() % 18) / 1000.0);
+                    nuevo.niveles.pm25 = 12.0 + (rand() % 15);
+                    
+                    nuevo.clima.temperatura = 22.0 + (rand() % 12);
+                    nuevo.clima.humedad = 60.0 + (rand() % 35);
+                    nuevo.clima.velocidad_viento = 8.0 + (rand() % 20);
+                }
+                
+                // Variación por zona (cada zona tiene características ligeramente diferentes)
+                float variacion_zona = (zonas[i].id % 5) * 0.1;
+                nuevo.niveles.co2 += nuevo.niveles.co2 * variacion_zona;
+                nuevo.niveles.so2 += nuevo.niveles.so2 * variacion_zona;
+                nuevo.niveles.no2 += nuevo.niveles.no2 * variacion_zona;
+                nuevo.niveles.pm25 += nuevo.niveles.pm25 * variacion_zona;
+                
+                nuevo.clima.temperatura += (zonas[i].id % 3) - 1;
+                nuevo.clima.humedad += (zonas[i].id % 4) * 2;
+                nuevo.clima.velocidad_viento += (zonas[i].id % 3);
+                
+                // Añadir variación semanal (fines de semana menos contaminación)
+                struct tm *tm_info = localtime(&fecha_dia);
+                if (tm_info->tm_wday == 0 || tm_info->tm_wday == 6) { // Domingo o Sábado
+                    nuevo.niveles.co2 *= 0.85;
+                    nuevo.niveles.so2 *= 0.80;
+                    nuevo.niveles.no2 *= 0.75;
+                    nuevo.niveles.pm25 *= 0.90;
+                }
+                
+                zonas[i].registros[zonas[i].num_registros++] = nuevo;
+            }
+            
+            printf("Se han generado los datos para los ultimos 30 dias de manera exitosa.\n");
+            guardarDatos();
+            return;
+        }
+    }
+    
+    printf("No se encontro una zona con ID %d\n", id);
+}
+
 void ingresarDatosContaminacion() {
     if (num_zonas == 0) {
         printf("No hay zonas registradas. Agregue zonas primero.\n");
@@ -306,13 +398,72 @@ void ingresarDatosContaminacion() {
     
     for (int i = 0; i < num_zonas; i++) {
         if (zonas[i].id == id) {
+            // Verificar si ya hay datos automáticos
+            if (zonas[i].num_registros > 0) {
+                printf("Esta zona ya tiene %d registros.\n", zonas[i].num_registros);
+                printf("1. Modificar un registro existente\n");
+                printf("2. Agregar nuevos registros\n");
+                printf("0. Cancelar\n");
+                
+                int opcion = leerEntero("Seleccione una opcion: ");
+                if (opcion == 0) return;
+                
+                if (opcion == 1) {
+                    // Modificar registro existente
+                    char fechaBuscar[11];
+                    leerCadena("Ingrese la fecha a modificar (DD/MM/AAAA): ", fechaBuscar, 11);
+                    while (!validarFecha(fechaBuscar)) {
+                        printf("Fecha invalida. Formato DD/MM/AAAA.\n");
+                        leerCadena("Ingrese la fecha a modificar (DD/MM/AAAA): ", fechaBuscar, 11);
+                    }
+                    
+                    struct tm tm_buscar = {0};
+                    sscanf(fechaBuscar, "%d/%d/%d", &tm_buscar.tm_mday, &tm_buscar.tm_mon, &tm_buscar.tm_year);
+                    tm_buscar.tm_mon -= 1;
+                    tm_buscar.tm_year -= 1900;
+                    time_t fecha_buscar = mktime(&tm_buscar);
+                    
+                    // Buscar el registro
+                    int encontrado = -1;
+                    for (int j = 0; j < zonas[i].num_registros; j++) {
+                        char fechaExistente[11];
+                        formatearFecha(zonas[i].registros[j].fecha, fechaExistente);
+                        if (strcmp(fechaBuscar, fechaExistente) == 0) {
+                            encontrado = j;
+                            break;
+                        }
+                    }
+                    
+                    if (encontrado == -1) {
+                        printf("No se encontro un registro para la fecha %s\n", fechaBuscar);
+                        return;
+                    }
+                    
+                    printf("Modificando datos para %s:\n", fechaBuscar);
+                    zonas[i].registros[encontrado].niveles.co2 = leerFloat("CO2 (ppm): ");
+                    zonas[i].registros[encontrado].niveles.so2 = leerFloat("SO2 (ppm): ");
+                    zonas[i].registros[encontrado].niveles.no2 = leerFloat("NO2 (ppm): ");
+                    zonas[i].registros[encontrado].niveles.pm25 = leerFloat("PM2.5 (ug/m3): ");
+                    
+                    printf("Datos climaticos:\n");
+                    zonas[i].registros[encontrado].clima.temperatura = leerFloat("Temperatura (grados C): ");
+                    zonas[i].registros[encontrado].clima.humedad = leerFloat("Humedad (%): ");
+                    zonas[i].registros[encontrado].clima.velocidad_viento = leerFloat("Velocidad del viento (km/h): ");
+                    
+                    printf("Registro modificado exitosamente.\n");
+                    guardarDatos();
+                    return;
+                }
+                // Si opcion == 2, continúa con el flujo normal para agregar
+            }
+            
             int numDias;
             do {
-                numDias = leerEntero("Cuantos dias de datos desea ingresar (minimo 3, maximo 5): ");
-                if (numDias < 3 || numDias > 5) {
-                    printf("Debe ingresar entre 3 y 5 dias.\n");
+                numDias = leerEntero("Cuantos dias de datos desea ingresar (minimo 3, maximo 30): ");
+                if (numDias < 3 || numDias > 30) {
+                    printf("Debe ingresar entre 3 y 30 dias.\n");
                 }
-            } while (numDias < 3 || numDias > 5);
+            } while (numDias < 3 || numDias > 30);
 
             if (zonas[i].num_registros + numDias > MAX_DIAS) {
                 printf("No se pueden agregar %d dias. La zona tiene %d registros, maximo %d.\n", 
@@ -725,17 +876,30 @@ void listarAlertas() {
     Alerta alertasZona[MAX_DIAS * 4];
     int numAlertasZona = 0;
     
+    // Buscar alertas que contengan el nombre de la zona
     for (int i = 0; i < num_alertas; i++) {
-        if (strstr(alertas[i].mensaje, nombreZona) != NULL) {
+        // Crear un patrón de búsqueda más específico
+        char patron[100];
+        snprintf(patron, sizeof(patron), "Zona %s", nombreZona);
+        
+        if (strstr(alertas[i].mensaje, patron) != NULL) {
             alertasZona[numAlertasZona++] = alertas[i];
         }
     }
     
     if (numAlertasZona == 0) {
         printf("No hay alertas para la zona %s\n", nombreZona);
+        printf("Total de alertas en el sistema: %d\n", num_alertas);
+        
+        // Debug: mostrar algunas alertas para verificar el formato
+        printf("\nEjemplos de alertas en el sistema:\n");
+        for (int i = 0; i < (num_alertas < 3 ? num_alertas : 3); i++) {
+            printf("Alerta %d: %s\n", i+1, alertas[i].mensaje);
+        }
         return;
     }
 
+    // Ordenar alertas por fecha (más recientes primero)
     for (int i = 0; i < numAlertasZona - 1; i++) {
         for (int j = i + 1; j < numAlertasZona; j++) {
             if (alertasZona[i].fecha < alertasZona[j].fecha) {

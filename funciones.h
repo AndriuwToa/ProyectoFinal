@@ -69,6 +69,7 @@ void modificarZona();
 void eliminarZona();
 
 void ingresarDatosContaminacion();
+void gestionAutomaticaDatos();
 void mostrarContaminacionActual();
 void mostrarContaminacionHistorica();
 void compararConLimitesOMS();
