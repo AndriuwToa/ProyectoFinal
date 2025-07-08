@@ -335,24 +335,24 @@ void gestionAutomaticaDatos() {
                 // Generar datos base según región
                 if (esSierra) {
                     // Datos típicos de sierra (altitud, clima más fresco)
-                    nuevo.niveles.co2 = 380.0 + (rand() % 50);
+                    nuevo.niveles.co2 = 6.0 + ((rand() % 60) / 10.0); // 6.0 - 12.0 ppm
                     nuevo.niveles.so2 = 0.008 + ((rand() % 20) / 1000.0);
                     nuevo.niveles.no2 = 0.008 + ((rand() % 15) / 1000.0);
                     nuevo.niveles.pm25 = 8.0 + (rand() % 12);
                     
                     nuevo.clima.temperatura = 12.0 + (rand() % 16);
                     nuevo.clima.humedad = 45.0 + (rand() % 30);
-                    nuevo.clima.velocidad_viento = 5.0 + (rand() % 15);
+                    nuevo.clima.velocidad_viento = 0.1 + ((rand() % 14) / 10.0); // 0.1 - 1.5 km/h
                 } else {
                     // Datos típicos de costa (nivel del mar, más cálido y húmedo)
-                    nuevo.niveles.co2 = 400.0 + (rand() % 60);
+                    nuevo.niveles.co2 = 7.0 + ((rand() % 50) / 10.0); // 7.0 - 12.0 ppm
                     nuevo.niveles.so2 = 0.012 + ((rand() % 25) / 1000.0);
                     nuevo.niveles.no2 = 0.010 + ((rand() % 18) / 1000.0);
                     nuevo.niveles.pm25 = 12.0 + (rand() % 15);
                     
                     nuevo.clima.temperatura = 22.0 + (rand() % 12);
                     nuevo.clima.humedad = 60.0 + (rand() % 35);
-                    nuevo.clima.velocidad_viento = 8.0 + (rand() % 20);
+                    nuevo.clima.velocidad_viento = 0.2 + ((rand() % 12) / 10.0); // 0.2 - 1.4 km/h
                 }
                 
                 // Variación por zona (cada zona tiene características ligeramente diferentes)
@@ -364,7 +364,7 @@ void gestionAutomaticaDatos() {
                 
                 nuevo.clima.temperatura += (zonas[i].id % 3) - 1;
                 nuevo.clima.humedad += (zonas[i].id % 4) * 2;
-                nuevo.clima.velocidad_viento += (zonas[i].id % 3);
+                nuevo.clima.velocidad_viento += ((zonas[i].id % 3) / 10.0); // Incremento menor para viento
                 
                 // Añadir variación semanal (fines de semana menos contaminación)
                 struct tm *tm_info = localtime(&fecha_dia);
@@ -373,6 +373,16 @@ void gestionAutomaticaDatos() {
                     nuevo.niveles.so2 *= 0.80;
                     nuevo.niveles.no2 *= 0.75;
                     nuevo.niveles.pm25 *= 0.90;
+                }
+                
+                // Asegurar que CO2 no exceda demasiado el límite OMS
+                if (nuevo.niveles.co2 > 15.0) {
+                    nuevo.niveles.co2 = 8.0 + ((rand() % 40) / 10.0); // 8.0 - 12.0 ppm
+                }
+                
+                // Asegurar que el viento esté en rango de confort
+                if (nuevo.clima.velocidad_viento > 1.5) {
+                    nuevo.clima.velocidad_viento = 0.1 + ((rand() % 14) / 10.0); // 0.1 - 1.5 km/h
                 }
                 
                 zonas[i].registros[zonas[i].num_registros++] = nuevo;
@@ -554,33 +564,41 @@ void mostrarContaminacionHistorica() {
     
     printf("\n=== CONTAMINACION HISTORICA ===\n");
     
+    listarZonas();
+    int id = leerEntero("Ingrese el ID de la zona para contaminacion historica: ");
+    
     for (int i = 0; i < num_zonas; i++) {
-        if (zonas[i].num_registros == 0) {
-            printf("Zona %s: No hay datos registrados.\n", zonas[i].nombre);
-            continue;
-        }
-        
-        printf("\nZona: %s\n", zonas[i].nombre);
-        printf("Total de registros: %d\n", zonas[i].num_registros);
-        printf("----------------------------------------\n");
-        
-        for (int j = 0; j < zonas[i].num_registros; j++) {
-            char fechaStr[11];
-            formatearFecha(zonas[i].registros[j].fecha, fechaStr);
+        if (zonas[i].id == id) {
+            if (zonas[i].num_registros == 0) {
+                printf("Zona %s: No hay datos registrados.\n", zonas[i].nombre);
+                return;
+            }
             
-            printf("\nDia %d (%s):\n", j + 1, fechaStr);
-            printf("Contaminantes:\n");
-            printf("  CO2: %.2f ppm\n", zonas[i].registros[j].niveles.co2);
-            printf("  SO2: %.3f ppm\n", zonas[i].registros[j].niveles.so2);
-            printf("  NO2: %.3f ppm\n", zonas[i].registros[j].niveles.no2);
-            printf("  PM2.5: %.2f ug/m3\n", zonas[i].registros[j].niveles.pm25);
-            printf("Clima:\n");
-            printf("  Temperatura: %.1f grados C\n", zonas[i].registros[j].clima.temperatura);
-            printf("  Humedad: %.1f%%\n", zonas[i].registros[j].clima.humedad);
-            printf("  Viento: %.1f km/h\n", zonas[i].registros[j].clima.velocidad_viento);
+            printf("\nZona: %s\n", zonas[i].nombre);
+            printf("Total de registros: %d\n", zonas[i].num_registros);
+            printf("----------------------------------------\n");
+            
+            for (int j = 0; j < zonas[i].num_registros; j++) {
+                char fechaStr[11];
+                formatearFecha(zonas[i].registros[j].fecha, fechaStr);
+                
+                printf("\nDia %d (%s):\n", j + 1, fechaStr);
+                printf("Contaminantes:\n");
+                printf("  CO2: %.2f ppm\n", zonas[i].registros[j].niveles.co2);
+                printf("  SO2: %.3f ppm\n", zonas[i].registros[j].niveles.so2);
+                printf("  NO2: %.3f ppm\n", zonas[i].registros[j].niveles.no2);
+                printf("  PM2.5: %.2f ug/m3\n", zonas[i].registros[j].niveles.pm25);
+                printf("Clima:\n");
+                printf("  Temperatura: %.1f grados C\n", zonas[i].registros[j].clima.temperatura);
+                printf("  Humedad: %.1f%%\n", zonas[i].registros[j].clima.humedad);
+                printf("  Viento: %.1f km/h\n", zonas[i].registros[j].clima.velocidad_viento);
+            }
+            printf("========================================\n");
+            return;
         }
-        printf("========================================\n");
     }
+    
+    printf("No se encontro una zona con ID %d\n", id);
 }
 
 void compararConLimitesOMS() {
