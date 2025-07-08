@@ -146,7 +146,7 @@ void guardarDatos() {
 }
 
 int encontrarSiguienteID() {
-    for (int id = 1; id <= MAX_ZONAS; id++) {
+    for (int id = 1; id <= 9999; id++) {
         int id_usado = 0;
         for (int i = 0; i < num_zonas; i++) {
             if (zonas[i].id == id) {
@@ -162,25 +162,11 @@ int encontrarSiguienteID() {
 }
 
 void agregarZona() {
-    if (num_zonas >= MAX_ZONAS) {
-        printf("No se pueden agregar mas zonas. Limite alcanzado.\n");
-        return;
-    }
-    
-    // Preguntar cuantas zonas quiere agregar
-    int espacios_disponibles = MAX_ZONAS - num_zonas;
-    printf("Espacios disponibles para zonas: %d\n", espacios_disponibles);
-    
     int cantidad = leerEntero("Cuantas zonas desea agregar? ");
     
     if (cantidad <= 0) {
         printf("Cantidad no valida.\n");
         return;
-    }
-    
-    if (cantidad > espacios_disponibles) {
-        printf("No hay suficiente espacio. Maximo disponible: %d\n", espacios_disponibles);
-        cantidad = espacios_disponibles;
     }
     
     printf("\n=== AGREGANDO %d ZONA(S) ===\n", cantidad);

@@ -8,13 +8,23 @@ void menuAnalisis();
 void menuRecomendaciones();
 void menuInformes();
 
+// Function to check if city name is set
+int validarNombreCiudad() {
+    return strlen(nombre_ciudad) > 0;
+}
+
+// Function to check if there are at least 5 zones
+int validarMinimoZonas() {
+    return num_zonas >= 5;
+}
+
 int main() {
     cargarDatos();
     
     int opcion;
     do {
         if (strlen(nombre_ciudad) > 0) {
-            printf("\n=== SISTEMA DE GESTION Y PREDICCION DE CONTAMINACION %s ===\n", nombre_ciudad);
+            printf("\n=== SISTEMA DE GESTION Y PREDICCION DE CONTAMINACION %s (actualmente %d zonas) ===\n", nombre_ciudad, num_zonas);
         } else {
             printf("\n=== SISTEMA DE GESTION Y PREDICCION DE CONTAMINACION ===\n");
         }
@@ -31,14 +41,82 @@ int main() {
         opcion = leerEntero("Seleccione una opcion: ");
         
         switch (opcion) {
-            case 1: agregarNombreCiudad(); break;
-            case 2: menuGestionZonas(); break;
-            case 3: menuMonitoreo(); break;
-            case 4: menuPrediccion(); break;
-            case 5: menuAlertas(); break;
-            case 6: menuAnalisis(); break;
-            case 7: menuRecomendaciones(); break;
-            case 8: menuInformes(); break;
+            case 1: 
+                agregarNombreCiudad(); 
+                break;
+            case 2: 
+                if (!validarNombreCiudad()) {
+                    printf("Error, no se puede continuar si no se agrego el nombre de la ciudad.\n");
+                    break;
+                }
+                menuGestionZonas(); 
+                break;
+            case 3: 
+                if (!validarNombreCiudad()) {
+                    printf("Error, no se puede continuar si no se agrego el nombre de la ciudad.\n");
+                    break;
+                }
+                if (!validarMinimoZonas()) {
+                    printf("Error, no se puede continuar si no se agregan minimo 5 zonas.\n");
+                    break;
+                }
+                menuMonitoreo(); 
+                break;
+            case 4: 
+                if (!validarNombreCiudad()) {
+                    printf("Error, no se puede continuar si no se agrego el nombre de la ciudad.\n");
+                    break;
+                }
+                if (!validarMinimoZonas()) {
+                    printf("Error, no se puede continuar si no se agregan minimo 5 zonas.\n");
+                    break;
+                }
+                menuPrediccion(); 
+                break;
+            case 5: 
+                if (!validarNombreCiudad()) {
+                    printf("Error, no se puede continuar si no se agrego el nombre de la ciudad.\n");
+                    break;
+                }
+                if (!validarMinimoZonas()) {
+                    printf("Error, no se puede continuar si no se agregan minimo 5 zonas.\n");
+                    break;
+                }
+                menuAlertas(); 
+                break;
+            case 6: 
+                if (!validarNombreCiudad()) {
+                    printf("Error, no se puede continuar si no se agrego el nombre de la ciudad.\n");
+                    break;
+                }
+                if (!validarMinimoZonas()) {
+                    printf("Error, no se puede continuar si no se agregan minimo 5 zonas.\n");
+                    break;
+                }
+                menuAnalisis(); 
+                break;
+            case 7: 
+                if (!validarNombreCiudad()) {
+                    printf("Error, no se puede continuar si no se agrego el nombre de la ciudad.\n");
+                    break;
+                }
+                if (!validarMinimoZonas()) {
+                    printf("Error, no se puede continuar si no se agregan minimo 5 zonas.\n");
+                    break;
+                }
+                menuRecomendaciones(); 
+                break;
+            case 8: 
+                if (!validarNombreCiudad()) {
+                    printf("Error, no se puede continuar si no se agrego el nombre de la ciudad.\n");
+                    break;
+                }
+                if (!validarMinimoZonas()) {
+                    printf("Error, no se puede continuar si no se agregan minimo 5 zonas.\n");
+                    break;
+                }
+                menuInformes(); 
+                break;
             case 0: 
                 printf("Saliendo del sistema...\n");
                 guardarDatos();
@@ -54,7 +132,7 @@ int main() {
 void menuGestionZonas() {
     int opcion;
     do {
-        printf("\n=== GESTION DE ZONAS ===\n");
+        printf("\n=== GESTION DE ZONAS (actualmente %d zonas) ===\n", num_zonas);
         printf("1. Agregar zona\n");
         printf("2. Listar zonas\n");
         printf("3. Buscar zona\n");
